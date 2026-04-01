@@ -2,7 +2,7 @@
   "packageName": "com.felis.plugin.sflix",
   "name": "sflix",
   "version": 1,
-  "baseUrl": "https://example.com",
+  "baseUrl": "https://sflix.film",
   "description": "sflix plugin (Sky Gen 2)",
   "authors": [
     "FelisSilvestris"
