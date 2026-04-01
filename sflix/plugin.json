@@ -3,7 +3,7 @@
   "name": "sflix",
   "version": 1,
   "baseUrl": "https://sflix.film",
-  "description": "sflix plugin (Sky Gen 2)",
+  "description": "sflix plugin",
   "authors": [
     "FelisSilvestris"
   ],
