@@ -1,32 +1,19 @@
 (function() {
-    function getBaseUrl() {
-        const base = (typeof manifest !== 'undefined' && manifest.baseUrl) ? manifest.baseUrl : "https://sflix.film";
-        return base.replace(/\/+$/, '');
-    }
+    const BASE_URL = "https://sflix.film";
 
-    // Pakai header browser PC standar agar tidak diblokir Anti-Bot
     const commonHeaders = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "application/json, text/plain, */*",
-        "Accept-Language": "en-US,en;q=0.9,id;q=0.8"
+        "Accept": "application/json, text/plain, */*"
     };
 
     async function fetchGet(endpoint, extraHeaders = {}) {
-        const url = `${getBaseUrl()}${endpoint}`;
+        const url = BASE_URL + endpoint;
         const headers = { ...commonHeaders, ...extraHeaders };
 
         if (typeof http_get !== 'undefined') {
-            try {
-                const res = await http_get(url, headers);
-                // Jika sukses (200 OK)
-                if (res && res.status >= 200 && res.status < 300) {
-                    return JSON.parse(res.body);
-                }
-                // Jika diblokir (403, 503, dll), tangkap status dan isi responsenya
-                throw new Error(`Status: ${res ? res.status : 'Unknown'} | Info: ${res && res.body ? res.body.substring(0, 40) : 'Kosong'}`);
-            } catch (err) {
-                throw new Error(`Req Gagal: ${err.message}`);
-            }
+            const res = await http_get(url, headers);
+            if (res && res.status === 200) return JSON.parse(res.body);
+            throw new Error(`Error GET: ${res ? res.status : 'Unknown'}`);
         } else {
             const res = await fetch(url, { headers });
             return await res.json();
@@ -34,30 +21,24 @@
     }
 
     async function fetchPost(endpoint, bodyObj) {
-        const url = `${getBaseUrl()}${endpoint}`;
+        const url = BASE_URL + endpoint;
         const headers = { ...commonHeaders, "Content-Type": "application/json" };
         const bodyStr = JSON.stringify(bodyObj);
 
         if (typeof http_post !== 'undefined') {
-            try {
-                const res = await http_post(url, bodyStr, headers);
-                if (res && res.status >= 200 && res.status < 300) {
-                    return JSON.parse(res.body);
-                }
-                throw new Error(`Status POST: ${res ? res.status : 'Unknown'}`);
-            } catch (err) {
-                throw new Error(`POST Gagal: ${err.message}`);
-            }
+            const res = await http_post(url, bodyStr, headers);
+            if (res && res.status === 200) return JSON.parse(res.body);
+            throw new Error(`Error POST: ${res ? res.status : 'Unknown'}`);
         } else {
             const res = await fetch(url, { method: 'POST', headers, body: bodyStr });
             return await res.json();
         }
     }
 
-    // --- Core Functions --- //
-
+    // 1. HOME PAGE
     async function getHome(cb) {
         try {
+            // Catatan: ID ini mungkin sudah kosong dari server (seperti tesmu sebelumnya)
             const data = await fetchGet('/wefeed-h5-bff/web/ranking-list/content?id=872031290915189720&page=1&perPage=12');
             
             if (!data || !data.data || !data.data.subjectList) {
@@ -74,11 +55,11 @@
 
             cb({ success: true, data: { "Trending": items } });
         } catch (e) {
-            // Error ini akan muncul di layar SkyStream agar kita tahu letak masalahnya
             cb({ success: false, errorCode: "SITE_OFFLINE", message: e.message });
         }
     }
 
+    // 2. SEARCH
     async function search(query, cb) {
         try {
             const body = { keyword: query, page: "1", perPage: "0", subjectType: "0" };
@@ -102,6 +83,7 @@
         }
     }
 
+    // 3. LOAD DETAILS
     async function load(url, cb) {
         try {
             const data = await fetchGet(`/wefeed-h5-bff/web/subject/detail?subjectId=${url}`);
@@ -155,10 +137,11 @@
         }
     }
 
+    // 4. LOAD STREAMS
     async function loadStreams(dataStr, cb) {
         try {
             const { id, se, ep, path } = JSON.parse(dataStr);
-            const refererUrl = `${getBaseUrl()}/spa/videoPlayPage/movies/${path}?id=${id}&type=/movie/detail&lang=en`;
+            const refererUrl = `${BASE_URL}/spa/videoPlayPage/movies/${path}?id=${id}&type=/movie/detail&lang=en`;
             
             const data = await fetchGet(`/wefeed-h5-bff/web/subject/play?subjectId=${id}&se=${se}&ep=${ep}`, {
                 "Referer": refererUrl
@@ -171,7 +154,7 @@
             const streams = data.data.streams.map(s => new StreamResult({
                 url: s.url,
                 quality: s.resolutions || "Auto",
-                headers: { "Referer": `${getBaseUrl()}/` }
+                headers: { "Referer": `${BASE_URL}/` }
             }));
 
             cb({ success: true, data: streams });
