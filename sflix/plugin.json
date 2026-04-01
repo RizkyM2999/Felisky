@@ -1,0 +1,16 @@
+{
+  "packageName": "com.felis.plugin.sflix",
+  "name": "sflix",
+  "version": 1,
+  "baseUrl": "https://example.com",
+  "description": "sflix plugin (Sky Gen 2)",
+  "authors": [
+    "FelisSilvestris"
+  ],
+  "languages": [
+    "en"
+  ],
+  "categories": [
+    "Others"
+  ]
+}
