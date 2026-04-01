@@ -35,29 +35,51 @@
         }
     }
 
-    // 1. HOME PAGE
+    // 1. HOME PAGE (Semua Kategori)
     async function getHome(cb) {
+        // Daftar kategori dari Sflix.kt
+        const categories = [
+            { id: "872031290915189720", name: "Trending" },
+            { id: "6528093688173053896", name: "Indonesian Movie" },
+            { id: "5283462032510044280", name: "Indonesian Drama" },
+            { id: "997144265920760504", name: "Hollywood" },
+            { id: "4380734070238626200", name: "K-Drama" },
+            { id: "8617025562613270856", name: "Anime" },
+            { id: "5848753831881965888", name: "Horror" },
+            { id: "7132534597631837112", name: "Animation" }
+            // Bisa tambah ID lain sesuai kebutuhan
+        ];
+
         try {
-            // Catatan: ID ini mungkin sudah kosong dari server (seperti tesmu sebelumnya)
-            const data = await fetchGet('/wefeed-h5-bff/web/ranking-list/content?id=872031290915189720&page=1&perPage=12');
-            
-            if (!data || !data.data || !data.data.subjectList) {
-                return cb({ success: true, data: {} });
+            const homeData = {};
+
+            // Kita pakai for...of agar request berjalan satu per satu (berurutan)
+            // Ini untuk mencegah server Sflix nge-blokir kita kalau nembak banyak API sekaligus
+            for (const cat of categories) {
+                try {
+                    const data = await fetchGet(`/wefeed-h5-bff/web/ranking-list/content?id=${cat.id}&page=1&perPage=12`);
+                    
+                    if (data && data.data && data.data.subjectList && data.data.subjectList.length > 0) {
+                        homeData[cat.name] = data.data.subjectList.map(item => new MultimediaItem({
+                            title: item.title,
+                            url: item.subjectId,
+                            posterUrl: item.cover?.url,
+                            type: item.subjectType === 1 ? "movie" : "series",
+                            score: parseFloat(item.imdbRatingValue) || 0
+                        }));
+                    }
+                } catch (err) {
+                    // Kalau 1 kategori gagal/kosong, skip dan lanjut ke kategori berikutnya
+                    console.log(`Skip ${cat.name}`);
+                }
             }
 
-            const items = data.data.subjectList.map(item => new MultimediaItem({
-                title: item.title,
-                url: item.subjectId,
-                posterUrl: item.cover?.url,
-                type: item.subjectType === 1 ? "movie" : "series",
-                score: parseFloat(item.imdbRatingValue) || 0
-            }));
-
-            cb({ success: true, data: { "Trending": items } });
+            cb({ success: true, data: homeData });
         } catch (e) {
             cb({ success: false, errorCode: "SITE_OFFLINE", message: e.message });
         }
     }
+
 
     // 2. SEARCH
     async function search(query, cb) {
