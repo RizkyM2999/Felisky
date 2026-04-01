@@ -3,8 +3,63 @@
 
     const commonHeaders = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "application/json, text/plain, */*"
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "en-US,en;q=0.9,id;q=0.8", // Header krusial untuk streaming site
+        "Origin": BASE_URL,
+        "Referer": BASE_URL + "/"
     };
+
+    async function search(cb_query, cb) {
+        try {
+            const url = BASE_URL + '/wefeed-h5-bff/web/subject/search';
+            
+            // Body harus murni Number untuk angka (seperti tes browser kamu)
+            const bodyObj = {
+                keyword: cb_query,
+                page: 1,
+                perPage: 20,
+                subjectType: 0
+            };
+
+            const headers = {
+                ...commonHeaders,
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            };
+
+            let responseData;
+
+            // Logika Deteksi Environment (App vs CLI)
+            if (typeof http_post !== 'undefined') {
+                const res = await http_post(url, JSON.stringify(bodyObj), headers);
+                if (res && res.status === 200) responseData = JSON.parse(res.body);
+            } else {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify(bodyObj)
+                });
+                responseData = await res.json();
+            }
+
+            if (!responseData || !responseData.data || !responseData.data.items) {
+                return cb({ success: true, data: [] });
+            }
+
+            const items = responseData.data.items.map(item => new MultimediaItem({
+                title: item.title,
+                url: item.subjectId,
+                posterUrl: item.cover?.url,
+                type: item.subjectType === 1 ? "movie" : "series",
+                score: parseFloat(item.imdbRatingValue) || 0
+            }));
+
+            cb({ success: true, data: items });
+        } catch (e) {
+            cb({ success: false, errorCode: "PARSE_ERROR", message: e.message });
+        }
+    }
+
 
     async function fetchGet(endpoint, extraHeaders = {}) {
         const url = BASE_URL + endpoint;
@@ -81,29 +136,7 @@
     }
 
 
-    // 2. SEARCH
-    async function search(query, cb) {
-        try {
-            const body = { keyword: query, page: "1", perPage: "0", subjectType: "0" };
-            const data = await fetchPost('/wefeed-h5-bff/web/subject/search', body);
 
-            if (!data || !data.data || !data.data.items) {
-                return cb({ success: true, data: [] });
-            }
-
-            const items = data.data.items.map(item => new MultimediaItem({
-                title: item.title,
-                url: item.subjectId,
-                posterUrl: item.cover?.url,
-                type: item.subjectType === 1 ? "movie" : "series",
-                score: parseFloat(item.imdbRatingValue) || 0
-            }));
-
-            cb({ success: true, data: items });
-        } catch (e) {
-            cb({ success: false, errorCode: "PARSE_ERROR", message: e.message });
-        }
-    }
 
     // 3. LOAD DETAILS
     async function load(url, cb) {
