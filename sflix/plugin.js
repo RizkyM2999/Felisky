@@ -8,67 +8,50 @@
         "Origin": BASE_URL,
         "Referer": BASE_URL + "/"
     };
-
-    async function search(query, cb) {
-        try {
-            const url = BASE_URL + '/wefeed-h5-bff/web/subject/search';
-            
-            const bodyStr = JSON.stringify({
-                "keyword": query,
-                "page": 1,
-                "perPage": 20,
-                "subjectType": 0
-            });
-            
-            const headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                "Accept": "application/json, text/plain, */*",
-                "Accept-Language": "en-US,en;q=0.9,id;q=0.8",
-                "Content-Type": "application/json;charset=UTF-8",
-                "Origin": BASE_URL,
-                "Referer": BASE_URL + "/",
-                "Accept-Encoding": "gzip, deflate, br",
-                "Connection": "keep-alive"
-            };
-
-            let responseData;
-
-            if (typeof http_post !== 'undefined') {
-                // Di Aplikasi SkyStream
-                const res = await http_post(url, bodyStr, headers);
-                if (res && res.status === 200) {
-                    responseData = JSON.parse(res.body);
-                }
-            } else {
-                // Di Terminal Node.js (Gunakan fetch)
-                const res = await fetch(url, {
-                    method: 'POST',
-                    headers: headers,
-                    body: bodyStr
-                });
-                responseData = await res.json();
-            }
-            
-            if (!responseData || !responseData.data || !responseData.data.items || responseData.data.items.length === 0) {
-                // Jika masih kosong, kita lempar error untuk melihat apa yang salah (Hanya untuk debug)
-                return cb({ success: true, data: [] }); 
-            }
-
-            const items = responseData.data.items.map(item => new MultimediaItem({
-                title: item.title,
-                url: item.subjectId,
-                posterUrl: item.cover?.url,
-                type: item.subjectType === 1 ? "movie" : "series",
-                score: parseFloat(item.imdbRatingValue) || 0
-            }));
-
-            cb({ success: true, data: items });
-
-        } catch (e) {
-            cb({ success: false, errorCode: "PARSE_ERROR", message: "Search Error: " + e.message });
-        }
-    }
-
+    
+	async function search(query, cb) {
+	    try {
+	        const url = `${BASE_URL}/wefeed-h5-bff/web/subject/search`;
+	        const headers = {
+	            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+	            "Accept": "application/json, text/plain, */*",
+	            "Content-Type": "application/json;charset=UTF-8",
+	            "Origin": BASE_URL,
+	            "Referer": `${BASE_URL}/`
+	        };
+	        const body = JSON.stringify({
+	            keyword: query,
+	            page: 1,
+	            perPage: 0, // Wajib 0
+	            subjectType: 0
+	        });
+	
+	        let resData;
+	        if (typeof http_post !== 'undefined') {
+	            // Urutan standar SkyStream: url, headers, body
+	            const res = await http_post(url, headers, body);
+	            // Handle jika runtime sudah auto-parse atau masih string
+	            resData = typeof res === 'string' ? JSON.parse(res) 
+	                      : (res.body ? (typeof res.body === 'string' ? JSON.parse(res.body) : res.body) : res);
+	        } else {
+	            const res = await fetch(url, { method: 'POST', headers, body });
+	            resData = await res.json();
+	        }
+	
+	        const items = resData?.data?.items || [];
+	        const results = items.map(item => new MultimediaItem({
+	            title: item.title || "",
+	            url: String(item.subjectId),
+	            posterUrl: item.cover?.url || "",
+	            type: item.subjectType === 1 ? "movie" : "series",
+	            score: parseFloat(item.imdbRatingValue) || 0
+	        }));
+	
+	        cb({ success: true, data: results });
+	    } catch (e) {
+	        cb({ success: false, errorCode: "SEARCH_ERROR", message: e.message });
+	    }
+	}
 
 
     async function fetchGet(endpoint, extraHeaders = {}) {
