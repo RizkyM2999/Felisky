@@ -122,25 +122,31 @@
                     const newStreams = resData?.data?.[0]?.stream || [];
                     
                     if (newStreams.length > 0 && newStreams[0].link) {
-                        streams.push(new StreamResult({
-						    url: newStreams[0].link,
-						    name: "Server " + reso,             // Muncul sebagai nama server
-						    description: "Resolusi: " + reso,   // Muncul sebagai teks kecil di bawahnya
-						    quality: reso                       // Tetap dikirim sebagai fallback
-						}));
-
+                        
+                        // [CATATAN DOKUMENTASI] 
+                        // Menggunakan raw object agar sesuai dengan Standard Data Schemas SkyStream.
+                        // SDK SkyStream hanya memproses field bawaan seperti 'url' dan 'quality'.
+                        // Field tambahan di luar skema (seperti 'name' atau 'server') akan diabaikan oleh player.
+                        
+                        streams.push({
+                            url: newStreams[0].link,
+                            quality: reso // Hanya mengirim resolusi murni (contoh: "720p")
+                        });
                     }
                 } catch (err) {
                     // Abaikan jika resolusi tertentu tidak tersedia
                 }
             });
 
+            // Tunggu semua request resolusi selesai
             await Promise.all(requests);
+
             cb({ success: true, data: streams });
         } catch (e) {
             cb({ success: false, errorCode: "PARSE_ERROR", message: e.message });
         }
     }
+
 
 
     globalThis.getHome = getHome;
