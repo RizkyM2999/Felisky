@@ -23,7 +23,11 @@ jobs:
       - name: Build
         run: |
           npm install -g skystream-cli
-          skystream deploy -u https://raw.githubusercontent.com/${{ github.repository }}/main
+          # 1. Ubah target URL ke branch build
+          skystream deploy -u https://raw.githubusercontent.com/${{ github.repository }}/build
+          
+          # 2. Hapus tulisan "/dist" dari semua file JSON yang dihasilkan
+          sed -i 's|/build/dist/|/build/|g' dist/*.json
 
       - name: Deploy to build branch
         run: |
