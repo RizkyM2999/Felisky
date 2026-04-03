@@ -23,18 +23,25 @@ jobs:
       - name: Build
         run: |
           npm install -g skystream-cli
-          # 1. Ubah target URL ke branch build
           skystream deploy -u https://raw.githubusercontent.com/${{ github.repository }}/build
-          
-          # 2. Hapus tulisan "/dist" dari semua file JSON yang dihasilkan
           sed -i 's|/build/dist/|/build/|g' dist/*.json
 
       - name: Deploy to build branch
         run: |
-          cp -r dist /tmp/build_result
+          # 1. Pindahkan (bukan copy) dist ke folder sementara agar lenyap dari repo
+          mv dist /tmp/build_result
+          
           git checkout -B build
+          
+          # 2. Hapus file tracked
           git rm -rf . || true
+          
+          # 3. Hapus bersih semua file untracked yang tersisa (termasuk node_modules)
+          git clean -fdx
+          
+          # 4. Kembalikan HANYA isi dari build_result
           cp -r /tmp/build_result/* .
+          
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add .
