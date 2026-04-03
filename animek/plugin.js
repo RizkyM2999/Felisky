@@ -12,10 +12,9 @@
             return await res.json();
         }
     }
-    // 1. HOME PAGE (Recommended, Latest & Movie)
+    // 1. HOME PAGE
     async function getHome(cb) {
         try {
-            // Load 3 API sekaligus
             const [dataRecommend, dataLatest, dataMovie] = await Promise.all([
                 fetchJson(`${API_BASE}/recommend`).catch(() => []),
                 fetchJson(`${API_BASE}/latest`).catch(() => []),
@@ -24,7 +23,7 @@
 
             const mapItem = (item) => new MultimediaItem({
                 title: item.judul,
-                url: item.url, // URL/ID anime
+                url: item.url,
                 posterUrl: item.cover,
                 type: (item.total_episode === "?" || item.lastch) ? "series" : "movie",
                 status: item.status || item.lastch || "Unknown"
@@ -32,9 +31,9 @@
 
             const homeData = {};
             
-            // Format array langsung sesuai struktur Sansekai API
+            // WAJIB gunakan nama "Trending" untuk mengisi Carousel
             if (Array.isArray(dataRecommend) && dataRecommend.length > 0) {
-                homeData["Recommended"] = dataRecommend.map(mapItem);
+                homeData["Trending"] = dataRecommend.map(mapItem);
             }
             if (Array.isArray(dataLatest) && dataLatest.length > 0) {
                 homeData["Latest Update"] = dataLatest.map(mapItem);
@@ -48,6 +47,7 @@
             cb({ success: false, errorCode: "SITE_OFFLINE", message: e.message });
         }
     }
+
 
 
     // 2. SEARCH
