@@ -109,15 +109,12 @@
             cb({ success: false, errorCode: "PARSE_ERROR", message: e.message });
         }
     }
-
     // 4. LOAD STREAMS
     async function loadStreams(chapterUrlId, cb) {
         try {
             const streams = [];
-            // Daftar resolusi umum yang biasa di-looping
             const resoList = ["1080p", "720p", "480p", "360p"];
 
-            // Kita tembak API untuk semua resolusi secara bersamaan agar cepat loadingnya
             const requests = resoList.map(async (reso) => {
                 try {
                     const resData = await fetchJson(`${API_BASE}/getvideo?chapterUrlId=${chapterUrlId}&reso=${reso}`);
@@ -126,6 +123,7 @@
                     if (newStreams.length > 0 && newStreams[0].link) {
                         streams.push(new StreamResult({
                             url: newStreams[0].link,
+                            name: `${reso}`, // KUNCI: Ini yang akan dibaca oleh UI aplikasi
                             quality: reso
                         }));
                     }
@@ -134,9 +132,7 @@
                 }
             });
 
-            // Tunggu semua request resolusi selesai
             await Promise.all(requests);
-
             cb({ success: true, data: streams });
         } catch (e) {
             cb({ success: false, errorCode: "PARSE_ERROR", message: e.message });
