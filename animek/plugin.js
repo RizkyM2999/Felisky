@@ -12,11 +12,12 @@
             return await res.json();
         }
     }
+    
     // 1. HOME PAGE
     async function getHome(cb) {
         try {
             const [dataRecommend, dataLatest, dataMovie] = await Promise.all([
-                fetchJson(`${API_BASE}/recommend`).catch(() => []),
+                fetchJson(`${API_BASE}/recommended?page=1`).catch(() => []),
                 fetchJson(`${API_BASE}/latest`).catch(() => []),
                 fetchJson(`${API_BASE}/movie`).catch(() => [])
             ]);
@@ -31,15 +32,21 @@
 
             const homeData = {};
             
-            // WAJIB gunakan nama "Trending" untuk mengisi Carousel
-            if (Array.isArray(dataRecommend) && dataRecommend.length > 0) {
-                homeData["Trending"] = dataRecommend.map(mapItem);
+            const recList = dataRecommend?.data || dataRecommend;
+            if (Array.isArray(recList) && recList.length > 0) {
+                homeData["Trending"] = recList.map(mapItem); // WAJIB "Trending"
             }
-            if (Array.isArray(dataLatest) && dataLatest.length > 0) {
-                homeData["Latest Update"] = dataLatest.map(mapItem);
+            
+            // Ekstrak data Latest
+            const latestList = dataLatest?.data || dataLatest;
+            if (Array.isArray(latestList) && latestList.length > 0) {
+                homeData["Latest Update"] = latestList.map(mapItem);
             }
-            if (Array.isArray(dataMovie) && dataMovie.length > 0) {
-                homeData["Movies"] = dataMovie.map(mapItem);
+            
+            // Ekstrak data Movie
+            const movieList = dataMovie?.data || dataMovie;
+            if (Array.isArray(movieList) && movieList.length > 0) {
+                homeData["Movies"] = movieList.map(mapItem);
             }
 
             cb({ success: true, data: homeData });
@@ -47,6 +54,7 @@
             cb({ success: false, errorCode: "SITE_OFFLINE", message: e.message });
         }
     }
+
 
 
 
