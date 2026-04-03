@@ -12,13 +12,15 @@
             return await res.json();
         }
     }
-
-    // 1. HOME PAGE (Latest & Movie)
+    // 1. HOME PAGE (Recommended, Latest & Movie)
     async function getHome(cb) {
         try {
-            // Mengambil dari endpoint yang sama persis dengan script.js kamu
-            const dataLatest = await fetchJson(`${API_BASE}/latest`);
-            const dataMovie = await fetchJson(`${API_BASE}/movie`);
+            // Load 3 API sekaligus
+            const [dataRecommend, dataLatest, dataMovie] = await Promise.all([
+                fetchJson(`${API_BASE}/recommend`).catch(() => []),
+                fetchJson(`${API_BASE}/latest`).catch(() => []),
+                fetchJson(`${API_BASE}/movie`).catch(() => [])
+            ]);
 
             const mapItem = (item) => new MultimediaItem({
                 title: item.judul,
@@ -31,10 +33,13 @@
             const homeData = {};
             
             // Format array langsung sesuai struktur Sansekai API
-            if (Array.isArray(dataLatest)) {
+            if (Array.isArray(dataRecommend) && dataRecommend.length > 0) {
+                homeData["Recommended"] = dataRecommend.map(mapItem);
+            }
+            if (Array.isArray(dataLatest) && dataLatest.length > 0) {
                 homeData["Latest Update"] = dataLatest.map(mapItem);
             }
-            if (Array.isArray(dataMovie)) {
+            if (Array.isArray(dataMovie) && dataMovie.length > 0) {
                 homeData["Movies"] = dataMovie.map(mapItem);
             }
 
@@ -43,6 +48,7 @@
             cb({ success: false, errorCode: "SITE_OFFLINE", message: e.message });
         }
     }
+
 
     // 2. SEARCH
     async function search(query, cb) {
