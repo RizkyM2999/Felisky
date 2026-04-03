@@ -109,6 +109,7 @@
             cb({ success: false, errorCode: "PARSE_ERROR", message: e.message });
         }
     }
+    
     // 4. LOAD STREAMS
     async function loadStreams(chapterUrlId, cb) {
         try {
@@ -123,7 +124,7 @@
                     if (newStreams.length > 0 && newStreams[0].link) {
                         streams.push(new StreamResult({
                             url: newStreams[0].link,
-                            name: `${reso}`, // KUNCI: Ini yang akan dibaca oleh UI aplikasi
+                            server: "Server " + reso, // SkyStream membaca label dari sini
                             quality: reso
                         }));
                     }
@@ -138,6 +139,7 @@
             cb({ success: false, errorCode: "PARSE_ERROR", message: e.message });
         }
     }
+
 
     globalThis.getHome = getHome;
     globalThis.search = search;
