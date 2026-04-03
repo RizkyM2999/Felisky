@@ -185,31 +185,48 @@
         }
     }
 
-    // 4. LOAD STREAMS
-    async function loadStreams(dataStr, cb) {
-        try {
-            const { id, se, ep, path } = JSON.parse(dataStr);
-            const refererUrl = `${BASE_URL}/spa/videoPlayPage/movies/${path}?id=${id}&type=/movie/detail&lang=en`;
-            
-            const data = await fetchGet(`/wefeed-h5-bff/web/subject/play?subjectId=${id}&se=${se}&ep=${ep}`, {
-                "Referer": refererUrl
-            });
-
-            if (!data || !data.data || !data.data.streams) {
-                return cb({ success: true, data: [] });
-            }
-
-            const streams = data.data.streams.map(s => new StreamResult({
-                url: s.url,
-                quality: s.resolutions || "Auto",
-                headers: { "Referer": `${BASE_URL}/` }
-            }));
-
-            cb({ success: true, data: streams });
-        } catch (e) {
-            cb({ success: false, errorCode: "PARSE_ERROR", message: e.message });
-        }
-    }
+	// Helper: parse quality dari string resolutions
+	function parseQuality(resolutions) {
+	    if (!resolutions) return "Auto";
+	    const res = resolutions.toString().toLowerCase();
+	    if (res.includes("2160") || res.includes("4k")) return "4K";
+	    if (res.includes("1440") || res.includes("2k")) return "2K";
+	    if (res.includes("1080")) return "1080p";
+	    if (res.includes("720")) return "720p";
+	    if (res.includes("480")) return "480p";
+	    if (res.includes("360")) return "360p";
+	    return "Auto";
+	}
+	
+	// 4. LOAD STREAMS
+	async function loadStreams(dataStr, cb) {
+	    try {
+	        const { id, se, ep, path } = JSON.parse(dataStr);
+	        const refererUrl = `${BASE_URL}/spa/videoPlayPage/movies/${path}?id=${id}&type=/movie/detail&lang=en`;
+	        
+	        const data = await fetchGet(`/wefeed-h5-bff/web/subject/play?subjectId=${id}&se=${se}&ep=${ep}`, {
+	            "Referer": refererUrl
+	        });
+	
+	        if (!data || !data.data || !data.data.streams) {
+	            return cb({ success: true, data: [] });
+	        }
+	
+	        // Match Kotlin: reversed() + distinctBy { it.url }
+	        const streams = data.data.streams
+	            .reverse()
+	            .filter((s, i, arr) => arr.findIndex(x => x.url === s.url) === i)
+	            .map(s => new StreamResult({
+	                url: s.url,
+	                quality: parseQuality(s.resolutions), // <-- FIX: parse resolusi
+	                headers: { "Referer": `${BASE_URL}/` }
+	            }));
+	
+	        cb({ success: true, data: streams });
+	    } catch (e) {
+	        cb({ success: false, errorCode: "PARSE_ERROR", message: e.message });
+	    }
+	}
 
     globalThis.getHome = getHome;
     globalThis.search = search;
