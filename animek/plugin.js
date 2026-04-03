@@ -123,10 +123,12 @@
                     
                     if (newStreams.length > 0 && newStreams[0].link) {
                         streams.push(new StreamResult({
-                            url: newStreams[0].link,
-                            server: "Server " + reso, // SkyStream membaca label dari sini
-                            quality: reso
-                        }));
+						    url: newStreams[0].link,
+						    name: "Server " + reso,             // Muncul sebagai nama server
+						    description: "Resolusi: " + reso,   // Muncul sebagai teks kecil di bawahnya
+						    quality: reso                       // Tetap dikirim sebagai fallback
+						}));
+
                     }
                 } catch (err) {
                     // Abaikan jika resolusi tertentu tidak tersedia
