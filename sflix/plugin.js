@@ -184,18 +184,14 @@
             cb({ success: false, errorCode: "PARSE_ERROR", message: e.message });
         }
     }
-
-	// Helper: parse quality dari string resolutions
-	function parseQuality(resolutions) {
-	    if (!resolutions) return "Auto";
-	    const res = resolutions.toString().toLowerCase();
-	    if (res.includes("2160") || res.includes("4k")) return "4K";
-	    if (res.includes("1440") || res.includes("2k")) return "2K";
-	    if (res.includes("1080")) return "1080p";
-	    if (res.includes("720")) return "720p";
-	    if (res.includes("480")) return "480p";
-	    if (res.includes("360")) return "360p";
-	    return "Auto";
+    
+	// Helper: format quality (360 → 360p, 1080p → 1080p)
+	function formatQuality(res) {
+	    if (!res) return "Auto";
+	    // Jika sudah ada suffix p/k, return as-is
+	    if (/[pk]$/i.test(res)) return res;
+	    // Tambah suffix 'p' untuk angka
+	    return res + 'p';
 	}
 	
 	// 4. LOAD STREAMS
@@ -216,17 +212,22 @@
 	        const streams = data.data.streams
 	            .reverse()
 	            .filter((s, i, arr) => arr.findIndex(x => x.url === s.url) === i)
-	            .map(s => new StreamResult({
-	                url: s.url,
-	                quality: parseQuality(s.resolutions), // <-- FIX: parse resolusi
-	                headers: { "Referer": `${BASE_URL}/` }
-	            }));
+	            .map(s => {
+	                const reso = formatQuality(s.resolutions);
+	                return new StreamResult({
+	                    url: s.url,
+	                    quality: reso,
+	                    source: reso, // KUNCI: Tambahkan 'source' di sini agar terbaca di UI aplikasi
+	                    headers: { "Referer": `${BASE_URL}/` }
+	                });
+	            });
 	
 	        cb({ success: true, data: streams });
 	    } catch (e) {
 	        cb({ success: false, errorCode: "PARSE_ERROR", message: e.message });
 	    }
 	}
+
 
     globalThis.getHome = getHome;
     globalThis.search = search;
