@@ -1,6 +1,6 @@
 {
   "packageName": "com.felis.plugin.sflix",
-  "name": "sflix",
+  "name": "sflix-beta",
   "version": 1,
   "baseUrl": "https://sflix.film",
   "description": "sflix plugin",
