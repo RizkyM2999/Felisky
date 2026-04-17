@@ -74,6 +74,14 @@
                 });
             }
 
+            if (json.custom_lists && json.custom_lists.length > 0) {
+                json.custom_lists.forEach(list => {
+                    if (list.title && list.items && list.items.length > 0) {
+                        result[list.title] = list.items.map(mapPoster);
+                    }
+                });
+            }
+
             cb({ success: true, data: result });
         } catch (e) {
             cb({ success: false, errorCode: "PARSE_ERROR", message: e.message });
@@ -135,17 +143,22 @@
                     buildnumber: BUILD_NUM
                 });
 
-                item.episodes = (seasonJson.data || []).map(ep => {
+                item.episodes = (seasonJson.data || []).map((ep, index) => {
                     let playId = "";
-                    if (ep.sources && ep.sources.length > 0) {
+                    if (ep.sources && ep.sources.length > 0 && ep.sources[0].url) {
                         const match = ep.sources[0].url.match(/[?&]id=(\d+)/);
                         if (match) playId = match[1];
+                        else {
+                            // Fallback if URL doesn't match expected pattern
+                            const parts = ep.sources[0].url.split('=');
+                            playId = parts[parts.length - 1];
+                        }
                     }
                     return new Episode({
-                        name: ep.title,
+                        name: ep.title || `Episode ${index + 1}`,
                         url: JSON.stringify({ id: playId, episode_id: String(ep.id) }),
                         season: 1,
-                        episode: parseInt(ep.title.replace(/\D/g, '')) || 0
+                        episode: index + 1
                     });
                 });
             } else {
