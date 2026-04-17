@@ -136,34 +136,42 @@
 
             if (item.type === "series") {
                 const seasons = detailsJson.data.seasons || [];
-                const seasonId = seasons.length > 0 ? seasons[0].id : id;
+                const allEpisodes = [];
 
-                const seasonJson = await apiPost(`${manifest.baseUrl}/api/v2/content/season/`, {
-                    id: String(seasonId),
-                    user_id: USER_ID,
-                    device_id: DEVICE_ID,
-                    packagename: PKG_NAME,
-                    buildnumber: BUILD_NUM
-                });
+                for (let i = 0; i < seasons.length; i++) {
+                    const season = seasons[i];
+                    try {
+                        const seasonJson = await apiPost(`${manifest.baseUrl}/api/v2/content/season/`, {
+                            id: String(season.id),
+                            user_id: USER_ID,
+                            device_id: DEVICE_ID,
+                            packagename: PKG_NAME,
+                            buildnumber: BUILD_NUM
+                        });
 
-                item.episodes = (seasonJson.data || []).map((ep, index) => {
-                    let playId = "";
-                    if (ep.sources && ep.sources.length > 0 && ep.sources[0].url) {
-                        const match = ep.sources[0].url.match(/[?&]id=(\d+)/);
-                        if (match) playId = match[1];
-                        else {
-                            // Fallback if URL doesn't match expected pattern
-                            const parts = ep.sources[0].url.split('=');
-                            playId = parts[parts.length - 1];
-                        }
+                        const episodes = (seasonJson.data || []).map((ep, index) => {
+                            let playId = "";
+                            if (ep.sources && ep.sources.length > 0 && ep.sources[0].url) {
+                                const match = ep.sources[0].url.match(/[?&]id=(\d+)/);
+                                if (match) playId = match[1];
+                                else {
+                                    const parts = ep.sources[0].url.split('=');
+                                    playId = parts[parts.length - 1];
+                                }
+                            }
+                            return new Episode({
+                                name: ep.title || `S${i+1} Ep ${index + 1}`,
+                                url: JSON.stringify({ id: playId, episode_id: String(ep.id) }),
+                                season: i + 1,
+                                episode: index + 1
+                            });
+                        });
+                        allEpisodes.push(...episodes);
+                    } catch (err) {
+                        console.error(`Failed to load season ${season.id}: ${err.message}`);
                     }
-                    return new Episode({
-                        name: ep.title || `Episode ${index + 1}`,
-                        url: JSON.stringify({ id: playId, episode_id: String(ep.id) }),
-                        season: 1,
-                        episode: index + 1
-                    });
-                });
+                }
+                item.episodes = allEpisodes;
             } else {
                 item.episodes = [new Episode({
                     name: poster.title,
