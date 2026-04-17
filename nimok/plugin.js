@@ -135,8 +135,11 @@
             });
 
             if (item.type === "series") {
+                const seasons = detailsJson.data.seasons || [];
+                const seasonId = seasons.length > 0 ? seasons[0].id : id;
+
                 const seasonJson = await apiPost(`${manifest.baseUrl}/api/v2/content/season/`, {
-                    id: id,
+                    id: String(seasonId),
                     user_id: USER_ID,
                     device_id: DEVICE_ID,
                     packagename: PKG_NAME,
