@@ -160,7 +160,7 @@
                                 }
                             }
                             return new Episode({
-                                name: ep.title || `S${i+1} Ep ${index + 1}`,
+                                name: ep.title,
                                 url: JSON.stringify({ id: playId, episode_id: String(ep.id) }),
                                 season: i + 1,
                                 episode: index + 1
