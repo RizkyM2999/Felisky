@@ -205,21 +205,31 @@
                 if (source.server && source.server.play) {
                     Object.keys(source.server.play).forEach(serverKey => {
                         const srv = source.server.play[serverKey];
-                        if (srv.hd) streams.push(new StreamResult({ 
-                            url: srv.hd.url, 
-                            quality: `${serverKey} HD (${srv.hd.size || ''})`.trim() 
-                        }));
-                        if (srv.sd) streams.push(new StreamResult({ 
-                            url: srv.sd.url, 
-                            quality: `${serverKey} SD (${srv.sd.size || ''})`.trim() 
-                        }));
+                        if (srv.hd) {
+                            const label = `${serverKey} HD (${srv.hd.size || ''})`.trim();
+                            streams.push(new StreamResult({ 
+                                url: srv.hd.url, 
+                                quality: label,
+                                source: label
+                            }));
+                        }
+                        if (srv.sd) {
+                            const label = `${serverKey} SD (${srv.sd.size || ''})`.trim();
+                            streams.push(new StreamResult({ 
+                                url: srv.sd.url, 
+                                quality: label,
+                                source: label
+                            }));
+                        }
                     });
                 }
                 if (source.alternatives) {
                     source.alternatives.forEach((alt, index) => {
+                        const label = `Alternative ${index + 1}`;
                         streams.push(new StreamResult({ 
                             url: alt, 
-                            quality: `Alternative ${index + 1}` 
+                            quality: label,
+                            source: label
                         }));
                     });
                 }
