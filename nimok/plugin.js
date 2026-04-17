@@ -35,6 +35,15 @@
         }
     }
 
+    function mapPoster(p) {
+        return new MultimediaItem({
+            title: p.title,
+            url: String(p.id),
+            posterUrl: p.image,
+            type: p.type === "serie" ? "series" : (p.type || "movie")
+        });
+    }
+
     async function getHome(cb) {
         try {
             const json = await apiPost(`${manifest.baseUrl}/api/v2/content/home/`, {
@@ -44,16 +53,28 @@
                 buildnumber: BUILD_NUM
             });
 
-            const trending = (json.slides || []).map(s => new MultimediaItem({
-                title: s.title === "POSTER_UMUM" ? s.poster.title : s.title,
-                url: String(s.poster.id),
-                posterUrl: s.poster.image,
-                type: s.poster.type === "serie" ? "series" : s.poster.type,
-                bannerUrl: s.imageDesktop || s.image,
-                description: s.description
-            }));
+            const result = {};
 
-            cb({ success: true, data: { "Trending": trending } });
+            if (json.slides && json.slides.length > 0) {
+                result["Trending"] = json.slides.map(s => new MultimediaItem({
+                    title: s.title === "POSTER_UMUM" ? s.poster.title : s.title,
+                    url: String(s.poster.id),
+                    posterUrl: s.poster.image,
+                    type: s.poster.type === "serie" ? "series" : s.poster.type,
+                    bannerUrl: s.imageDesktop || s.image,
+                    description: s.description
+                }));
+            }
+
+            if (json.list && json.list.length > 0) {
+                json.list.forEach(cat => {
+                    if (cat.title && cat.posters && cat.posters.length > 0) {
+                        result[cat.title] = cat.posters.map(mapPoster);
+                    }
+                });
+            }
+
+            cb({ success: true, data: result });
         } catch (e) {
             cb({ success: false, errorCode: "PARSE_ERROR", message: e.message });
         }
@@ -70,13 +91,7 @@
                 buildnumber: BUILD_NUM
             });
 
-            const results = (json || []).map(item => new MultimediaItem({
-                title: item.title,
-                url: String(item.id),
-                posterUrl: item.image,
-                type: item.type === "serie" ? "series" : item.type
-            }));
-
+            const results = (json || []).map(mapPoster);
             cb({ success: true, data: results });
         } catch (e) {
             cb({ success: false, errorCode: "SEARCH_ERROR", message: e.message });
@@ -134,7 +149,6 @@
                     });
                 });
             } else {
-                // For movies, we'd need to check detailsJson for sources if they exist
                 item.episodes = [new Episode({
                     name: poster.title,
                     url: JSON.stringify({ id: id, episode_id: id }),
@@ -167,13 +181,22 @@
                 if (source.server && source.server.play) {
                     Object.keys(source.server.play).forEach(serverKey => {
                         const srv = source.server.play[serverKey];
-                        if (srv.hd) streams.push(new StreamResult({ url: srv.hd.url, quality: `${serverKey} HD` }));
-                        if (srv.sd) streams.push(new StreamResult({ url: srv.sd.url, quality: `${serverKey} SD` }));
+                        if (srv.hd) streams.push(new StreamResult({ 
+                            url: srv.hd.url, 
+                            quality: `${serverKey} HD (${srv.hd.size || ''})`.trim() 
+                        }));
+                        if (srv.sd) streams.push(new StreamResult({ 
+                            url: srv.sd.url, 
+                            quality: `${serverKey} SD (${srv.sd.size || ''})`.trim() 
+                        }));
                     });
                 }
                 if (source.alternatives) {
                     source.alternatives.forEach((alt, index) => {
-                        streams.push(new StreamResult({ url: alt, quality: `Alternative ${index + 1}` }));
+                        streams.push(new StreamResult({ 
+                            url: alt, 
+                            quality: `Alternative ${index + 1}` 
+                        }));
                     });
                 }
             });
