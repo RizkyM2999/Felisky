@@ -1,9 +1,0 @@
-{
-  "name": "felisky",
-  "packageName": "com.felis.plugin",
-  "description": "SkyStream plugins repository",
-  "manifestVersion": 1,
-  "pluginLists": [
-    "https://raw.githubusercontent.com/RizkyM2999/Felisky/refs/heads/build/plugins.json"
-  ]
-}

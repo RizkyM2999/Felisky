@@ -1,0 +1,53 @@
+[
+  {
+    "packageName": "com.felis.plugin.animek",
+    "name": "animek",
+    "version": 1,
+    "baseUrl": "https://example.com",
+    "description": "animek plugin for my-repo",
+    "authors": [
+      "Developer"
+    ],
+    "languages": [
+      "en"
+    ],
+    "categories": [
+      "Others"
+    ],
+    "url": "https://raw.githubusercontent.com/RizkyM2999/Felisky/build/com.felis.plugin.animek.sky"
+  },
+  {
+    "packageName": "com.felis.plugin.nimok",
+    "name": "Nimok",
+    "version": 1,
+    "baseUrl": "https://dashbursanime.my.id",
+    "description": "Nimok plugin for SkyStream",
+    "authors": [
+      "Developer"
+    ],
+    "languages": [
+      "en"
+    ],
+    "categories": [
+      "Others"
+    ],
+    "url": "https://raw.githubusercontent.com/RizkyM2999/Felisky/build/com.felis.plugin.nimok.sky"
+  },
+  {
+    "packageName": "com.felis.plugin.sflix",
+    "name": "sflix-beta",
+    "version": 1,
+    "baseUrl": "https://sflix.film",
+    "description": "sflix plugin",
+    "authors": [
+      "FelisSilvestris"
+    ],
+    "languages": [
+      "en"
+    ],
+    "categories": [
+      "Others"
+    ],
+    "url": "https://raw.githubusercontent.com/RizkyM2999/Felisky/build/com.felis.plugin.sflix.sky"
+  }
+]
